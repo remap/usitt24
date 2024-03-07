@@ -30,6 +30,16 @@ To send messages between our Firebase instance and QLab, we use a custom python 
 
 The OSC forwarder uses certain python libraries (specifically the `firebase` python library) We need to ensure those are installed on our device.
 
+#### Python
+
+Python will need to be installed on your device. You can check if it's installed by going to the terminal and typing in `python`. If you get an error, you must install python. You can do so by visiting [https://www.python.org/downloads/](https://www.python.org/downloads/).
+
+Once python is installed on our device, we can download `pip` (package installer for Python)
+
+- `python -m ensurepip --upgrade`
+
+Then, using pip, we can install the firebase dependency used in our OSC forwarder.
+
 - `pip install firebase`
 
 
@@ -41,11 +51,7 @@ We use QLab to manage and run our performance cues. To get setup with QLab:
 - [Purchase](https://qlab.app/shop/) a QLab 5 `Audio` license, this will work with QLab 4.7
 - [Download QLab4.7](https://qlab.app/downloads/archive/QLab-4.7.zip)
   
-We have a variety of demos available in our Google Drive.
-
-- Navigate to https://drive.google.com/drive/folders/1_Vow0IkAkhG0oMrdzvzjX-WYtDsEvtON and download one of the Folders to your Desktop.
-- To open the project, unzip it and open the file ending in `.qlab4`
-
+This repo contains an example project `USITT24 Demo.qlab4` , which demonstrates some project functionality.
 
 ### Update the QLab Namespace
 
