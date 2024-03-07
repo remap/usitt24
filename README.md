@@ -1,6 +1,7 @@
 # 8th Wall Setup Document
 
 The following README is designed to help you get setup and running with 8th Wall and QLab.
+
 - [Download and Setup](#download--setup)
 - [Running the Project](#running-the-project)
 - [Optional Features](#optional)
@@ -19,13 +20,18 @@ Our project is run through 8th Wall, a web AR framework. To begin we want to cre
 
 ### Setting up our OSC Python Forwarder
 
-To send messages between our Firebase instance and QLab, we use a custom python script. It takes [OSC](https://en.wikipedia.org/wiki/Open_Sound_Control) commands and publishes them to the Firebase instance. To copy the project:
+To send messages between our Firebase instance and QLab, we use a custom python script. It takes [OSC](https://en.wikipedia.org/wiki/Open_Sound_Control) commands and publishes them to the Firebase instance. To begin, we need to copy the project:
 
 - Open the for the "Terminal" application on your Mac Computer and launch it
   - You can do this by hitting SPACE+HOME and typing in "Terminal"
 - Within the terminal type the following command:
-  - `cd ~/Desktop; git clone https://github.com/remap/pq23`
-  - This will create a folder called `pq23` on your Desktop.
+  - `cd ~/Desktop; git clone https://github.com/remap/usitt24`
+  - This will create a folder called `usitt24` on your Desktop.
+
+The OSC forwarder uses certain python libraries (specifically the `firebase` python library) We need to ensure those are installed on our device.
+
+- `pip install firebase`
+
 
 ### QLab
 
@@ -63,11 +69,11 @@ To begin, we have to start up our python OSC forwarder.
 
 ### OSC Forwarder
 
-- To begin, we want to run the python script inside of the `pq23` folder we copied from Github,.
+- To begin, we want to run the python script inside of the `usitt24` folder we copied from Github,.
 - Open the for the "Terminal" application on your Mac Computer and launch it
   - You can do this by hitting SPACE+HOME and typing in "Terminal"
 - Within the terminal type the following command:
-  - `python3 ~/Desktop/pq23/oscfirebase/oscforwarder.py`
+  - `python3 ~/Desktop/usitt24/oscfirebase/oscfirebase.py`
   - If a window appears, you've done this step successfully.
 
 
@@ -104,6 +110,6 @@ It is simple to set up your own Firebase instance.
 - After you register your app, you'll be presented with the following screen.
   ![](./screenshots//Screenshot%202024-02-23%20at%201.04.58 PM.png)
 - Copy the `firebaseConfig` data, and paste it into the `firebaseConfig` in `head.html` in our 8th Wall project.
-- Within `oscfwdtest.py`, on line 38, change the Firebase URL to the databaseURL copied in the last step. This will tell the Python forwarder where the forwarding destination is.
+- Within `oscfirebase.py`, on line 37, change the Firebase URL to the databaseURL copied in the last step. This will tell the Python forwarder where the forwarding destination is.
 - Finally, since we are using a local python forwarder, we must change the IP that our QLab networking uses. By clicking on the bottom left of our QLab project, and going to `Network`, we can make the following changes (changing the destination to localhost):
   ![](./screenshots/Screenshot%202024-02-23%20at%201.01.22 PM.png)
