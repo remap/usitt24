@@ -13,6 +13,7 @@ from pythonosc import osc_server
 from firebase import firebase
 from threading import Thread
 
+global dispatcher 
 def fwd(addr, *args):
     print("\n-----", datetime.today().strftime('%y-%m-%d %H:%M:%S'))
     print("  addr",addr)
@@ -40,9 +41,10 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(2048).strip()
-        print("tcp {}:".format(self.client_address[0]),data)
-        msg = OscMessage(data[1:]) #strip intro byte?  
-        fwd(msg.address,msg.params) 
+        data = data[1:-1]
+        print("\ntcp {}:".format(self.client_address[0]),data)
+        msg = OscMessage(data) #strip intro byte?  
+        dispatcher.call_handlers_for_packet(data,self.client_address)
  #        response = data  # This could be modified to your needs.
 #         self.request.sendall(response)
 
@@ -73,8 +75,13 @@ if __name__ == "__main__":
   udpserver = osc_server.ThreadingOSCUDPServer(
       (args.ip, args.port), dispatcher)
   print("Awaiting udp on {}".format(udpserver.server_address))
-  udpserver.serve_forever()
   
+  try: 
+    udpserver.serve_forever()
+  except KeyboardInterrupt:
+    tcpserver.shutdown()  # simple way
+    
+
   
 
 
