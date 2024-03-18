@@ -41,10 +41,13 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request.recv(2048).strip()
-        data = data[1:-1]
-        print("\ntcp {}:".format(self.client_address[0]),data)
-        msg = OscMessage(data) #strip intro byte?  
-        dispatcher.call_handlers_for_packet(data,self.client_address)
+        try: 
+          data = data[1:-1]
+          print("\ntcp {}:".format(self.client_address[0]),data)
+          msg = OscMessage(data) #strip intro byte?  
+          dispatcher.call_handlers_for_packet(data,self.client_address)
+        except:
+          print("\nexception in tcp handling")
  #        response = data  # This could be modified to your needs.
 #         self.request.sendall(response)
 
