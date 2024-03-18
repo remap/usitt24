@@ -5,12 +5,13 @@ received packets.
 """
 import argparse
 import math
+import socketserver
 from datetime import datetime
 from pythonosc import dispatcher
+from pythonosc.osc_message import OscMessage
 from pythonosc import osc_server
-
 from firebase import firebase
-
+from threading import Thread
 
 def fwd(addr, *args):
     print("\n-----", datetime.today().strftime('%y-%m-%d %H:%M:%S'))
@@ -31,6 +32,21 @@ def fwd(addr, *args):
         result = firebase.post(addr, args, params={'print': 'pretty'}, headers={'X_FANCY_HEADER': 'VERY FANCY'})
     print("    returned",result)
 
+## Experimental TCP support tested with QLab 5
+
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+    pass
+
+class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        data = self.request.recv(2048).strip()
+        print("tcp {}:".format(self.client_address[0]),data)
+        msg = OscMessage(data[1:]) #strip intro byte?  
+        fwd(msg.address,msg.params) 
+ #        response = data  # This could be modified to your needs.
+#         self.request.sendall(response)
+
+## Forward 
 
 if __name__ == "__main__":
 
@@ -41,12 +57,24 @@ if __name__ == "__main__":
       default="", help="The ip to listen on")
   parser.add_argument("--port",
       type=int, default=8090, help="The port to listen on")
+
   args = parser.parse_args()
 
   dispatcher = dispatcher.Dispatcher()
   dispatcher.map("*", fwd)
 
-  server = osc_server.ThreadingOSCUDPServer(
+
+  tcpserver = ThreadedTCPServer((args.ip, args.port), ThreadedTCPRequestHandler)
+  print("(Experimental) Awaiting tcp connections on {}".format(tcpserver.server_address))
+  tcpserver_thread = Thread(target=lambda:tcpserver.serve_forever())
+  tcpserver_thread.start() 
+
+	
+  udpserver = osc_server.ThreadingOSCUDPServer(
       (args.ip, args.port), dispatcher)
-  print("Serving on {}".format(server.server_address))
-  server.serve_forever()
+  print("Awaiting udp on {}".format(udpserver.server_address))
+  udpserver.serve_forever()
+  
+  
+
+
