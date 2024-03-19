@@ -14,6 +14,13 @@ from firebase import firebase
 from threading import Thread
 
 global dispatcher 
+global TCP_TIMEOUT
+
+TCP_TIMEOUT = 0.15
+# tradeoff here is possibility of dropping data during congestion
+# really we should be streaming out commands as they come in. 
+#
+
 def fwd(addr, *args):
     print("\n-----", datetime.today().strftime('%y-%m-%d %H:%M:%S'))
     print("  addr",addr)
@@ -41,7 +48,7 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = b''
-        self.request.settimeout(0.4)
+        self.request.settimeout(TCP_TIMEOUT) 
         while True:
           try: 
             _data = self.request.recv(1024)  # accept until connection closed - need to handle streaming?
