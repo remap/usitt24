@@ -27,9 +27,9 @@ def fb_callback(result):
 def fwd(addr, *args):
     print("\n-----", datetime.today().strftime('%y-%m-%d %H:%M:%S'))
     print("  ",addr)
-    print("    key:  ",args[0])
+    print("    k:",args[0])
     if len(args)>1: 
-        print("    value:",args[1:])
+        print("    v:",args[1:])
 
     result = []
     if (addr).endswith("/kvproperty"): 
@@ -69,7 +69,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             data += _data
             log += _data
             msgs = data.split(b'\xc0') 
-            if msgs[-1] == b'': 
+            if msgs[-1] == b'':    # ends with our delimeter
                 for msg in msgs: self.process(msg) 
                 data = b''
             else:
