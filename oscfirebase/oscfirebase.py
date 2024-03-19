@@ -21,12 +21,15 @@ TCP_TIMEOUT = 0.15
 # really we should be streaming out commands as they come in. 
 #
 
+def fb_callback(result):
+    print("fb async return",result)
+    
 def fwd(addr, *args):
     print("\n-----", datetime.today().strftime('%y-%m-%d %H:%M:%S'))
-    print("  addr",addr)
-    print("    key  ",args[0])
+    print("  ",addr)
+    print("    key:  ",args[0])
     if len(args)>1: 
-        print("    value",args[1:])
+        print("    value:",args[1:])
 
     result = []
     if (addr).endswith("/kvproperty"): 
@@ -35,10 +38,10 @@ def fwd(addr, *args):
             args=list(args).append("")
         for i in range(0,len(args),2):
             print("     ", args[i],args[i+1])
-            result.append(firebase.put(addr, args[i], args[i+1], params={'print': 'pretty'}, headers={'X_FANCY_HEADER': 'VERY FANCY'}))
+            firebase.put_async(addr, args[i], args[i+1], params={'print': 'pretty'}, headers={'X_FANCY_HEADER': 'VERY FANCY'},callback=fb_callback)
     else: # if (addr).endswith("/method") or (addr).endswith("/childmethod") or (addr).endswith("/event"):
-        result = firebase.post(addr, args, params={'print': 'pretty'}, headers={'X_FANCY_HEADER': 'VERY FANCY'})
-    print("    returned",result)
+        result = firebase.post_async(addr, args, params={'print': 'pretty'}, headers={'X_FANCY_HEADER': 'VERY FANCY'},callback=fb_callback)
+
 
 ## Experimental TCP support tested with QLab 5
 
@@ -46,31 +49,43 @@ class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     pass
 
 class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
+    def process(self, d): 
+        if len(d)==0 or d==b'': return
+        #print("handle tcp stream",d)
+        try: 
+        	msg = OscMessage(d) #strip intro byte?  
+        	dispatcher.call_handlers_for_packet(d,self.client_address)              
+        except Exception as e:
+          print(str(e))
+          
     def handle(self):
         data = b''
+        log = b'' 
         self.request.settimeout(TCP_TIMEOUT) 
         while True:
           try: 
             _data = self.request.recv(1024)  # accept until connection closed - need to handle streaming?
-            data += _data
             if not _data: break 
+            data += _data
+            log += _data
+            msgs = data.split(b'\xc0') 
+            if msgs[-1] == b'': 
+                for msg in msgs: self.process(msg) 
+                data = b''
+            else:
+                for msg in msgs[:-1]: self.process(msg) 
+                data = msg+b'\xc0'  # more efficient way? 
           except socket.timeout:
+          	#print("tcp socket timeout") 
             break 
-        data = data.strip()
-        try: 
-          #data = data[1:-1]
-          print("\ntcp {}:".format(self.client_address[0]), data)
-          for d in data.split(b'\xc0'): 
-            #print("\t",d)
-            if len(d)>0: 
-                msg = OscMessage(d) #strip intro byte?  
-                dispatcher.call_handlers_for_packet(d,self.client_address)
-          response = data  # This could be modified to your needs.
-          self.request.sendall(response)
-
-        except Exception as e:
-          print(str(e))
-          
+ #       data = data.strip()
+ 
+        for msg in data.split(b'\xc0'): 
+        	self.process(msg) 
+            
+        print("\nfinished tcp {}:".format(self.client_address[0]), log)
+  
+ 
 ## Forward 
 
 if __name__ == "__main__":
@@ -90,7 +105,6 @@ if __name__ == "__main__":
 
 
   tcpserver = ThreadedTCPServer((args.ip, args.port), ThreadedTCPRequestHandler)
-  tcpserver.request_queue_size = 10
   print("(Experimental) Awaiting tcp connections on {}".format(tcpserver.server_address))
   tcpserver_thread = Thread(target=lambda:tcpserver.serve_forever())
   tcpserver_thread.start() 
